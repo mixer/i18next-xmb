@@ -1,0 +1,52 @@
+{
+  "name": "i18next-xmb",
+  "version": "1.0.0",
+  "description": "xmb compatibility tools for i18next",
+  "main": "dist/index.js",
+  "scripts": {
+    "fmt": "prettier --write \"src/**/*.{json,ts}\" && npm run test:lint -- --fix",
+    "test": "mocha --opts mocha.opts && npm run test:fmt && npm run test:lint",
+    "test:fmt": "prettier --list-different \"src/**/*.{js,json,ts}\" || echo \"Run npm run fmt to fix formatting on these files\"",
+    "test:lint": "tslint --project tsconfig.json \"src/**/*.ts\"",
+    "build": "tsc",
+    "prepare": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mixer/i18next-xmb.git"
+  },
+  "keywords": [
+    "i18next",
+    "i18n",
+    "xmb",
+    "xtb",
+    "angular"
+  ],
+  "author": "Connor Peet <connor@peet.io>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mixer/i18next-xmb/issues"
+  },
+  "homepage": "https://github.com/mixer/i18next-xmb#readme",
+  "dependencies": {
+    "xml2js": "^0.4.19"
+  },
+  "devDependencies": {
+    "@types/chai": "^4.1.7",
+    "@types/mocha": "^5.2.5",
+    "@types/node": "^10.12.10",
+    "chai": "^4.2.0",
+    "mocha": "^5.2.0",
+    "prettier": "^1.15.2",
+    "ts-node": "^7.0.1",
+    "tslint": "^5.11.0",
+    "tslint-config-prettier": "^1.16.0",
+    "typescript": "^3.1.6"
+  },
+  "prettier": {
+    "trailingComma": "all",
+    "singleQuote": true,
+    "printWidth": 100,
+    "tabWidth": 2
+  }
+}
