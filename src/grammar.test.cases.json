@@ -39,7 +39,15 @@
     "input": "hello $t(name)!",
     "output": [
       { "type": 0, "value": "hello " },
-      { "type": 3, "value": "name" },
+      { "type": 3, "args": ["name"] },
+      { "type": 0, "value": "!" }
+    ]
+  },
+  "handles nesting with arguments": {
+    "input": "hello $t(name, world)!",
+    "output": [
+      { "type": 0, "value": "hello " },
+      { "type": 3, "args": ["name", "world"] },
       { "type": 0, "value": "!" }
     ]
   },
@@ -48,21 +56,23 @@
     "output": [{ "type": 0, "value": "hello $t(name {{!" }]
   },
   "handles multiple/simplifies empty": {
-    "input": "{{ a }}{{- b }}$t(c){{ d, uppercase }}",
+    "input": "{{ a }}{{- b }}$t(c){{ d, uppercase }}$t(e, {})",
     "output": [
       { "type": 2, "value": "a" },
       { "type": 1, "value": "b" },
-      { "type": 3, "value": "c" },
-      { "type": 2, "value": "d", "format": "uppercase" }
+      { "type": 3, "args": ["c"] },
+      { "type": 2, "value": "d", "format": "uppercase" },
+      { "type": 3, "args": ["e", "{}"] }
     ]
   },
   "omits extra spaces as requested": {
-    "input": "{{a}}{{-b}}$t(c){{d,uppercase}}",
+    "input": "{{a}}{{-b}}$t(c){{d,uppercase}}$t(e,{})",
     "output": [
       { "type": 2, "value": "a" },
       { "type": 1, "value": "b" },
-      { "type": 3, "value": "c" },
-      { "type": 2, "value": "d", "format": "uppercase" }
+      { "type": 3, "args": ["c"] },
+      { "type": 2, "value": "d", "format": "uppercase" },
+      { "type": 3, "args": ["e", "{}"] }
     ],
     "options": { "spaceAround": false }
   },
@@ -71,7 +81,7 @@
     "output": [
       { "type": 2, "value": "a" },
       { "type": 1, "value": "b" },
-      { "type": 3, "value": "c" },
+      { "type": 3, "args": ["c"] },
       { "type": 2, "value": "d", "format": "uppercase" }
     ],
     "options": {

@@ -24,6 +24,8 @@ const defaultOptions: IInterpolationOptions = {
   formatSeparator: ',',
 };
 
+const argumentSeparator = ','; // in i18next, this is not configurable
+
 /**
  * Enum of token types.
  */
@@ -65,7 +67,7 @@ export interface IUnescapedInterpolationToken {
  */
 export interface INestingToken {
   type: TokenType.Nesting;
-  value: string;
+  args: string[];
 }
 
 /*
@@ -128,8 +130,9 @@ function simplifyTokens(tokens: Token[]): Token[] {
       continue;
     }
 
-    if (i > 0 && tokens[i - 1].type === TokenType.Text) {
-      tokens.splice(--i, 1, { type: TokenType.Text, value: tokens[i - 1].value + token.value });
+    const previous = tokens[i - 1];
+    if (i > 0 && previous.type === TokenType.Text) {
+      tokens.splice(--i, 1, { type: TokenType.Text, value: previous.value + token.value });
     }
   }
 
@@ -176,7 +179,7 @@ export function lex(input: string, partialOptions?: Partial<IInterpolationOption
 
   tokens = mapReplacements(tokens, options.nestingPrefix, options.nestingSuffix, value => ({
     type: TokenType.Nesting,
-    value,
+    args: value.split(argumentSeparator).map(v => v.trim()),
   }));
 
   return simplifyTokens(tokens);
@@ -221,7 +224,10 @@ export function compile(
           options.suffix;
         break;
       case TokenType.Nesting:
-        output += options.nestingPrefix + token.value + options.nestingSuffix;
+        output +=
+          options.nestingPrefix +
+          token.args.join(argumentSeparator + extraSpace) +
+          options.nestingSuffix;
         break;
       default:
         throw new Error(`Unknown TokenType in token ${JSON.stringify(token)}.`);
