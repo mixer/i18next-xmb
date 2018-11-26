@@ -1,5 +1,5 @@
 const unicodeSpace = '\\u0020';
-const unicodeSpaceRe = new RegExp(unicodeSpace, 'g');
+const unicodeSpaceRe = new RegExp(`\\${unicodeSpace}`, 'g');
 
 /**
  * Replaces trailing and leading, or multiple-sequential spaces in the text to
