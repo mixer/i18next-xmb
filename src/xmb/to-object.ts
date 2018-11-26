@@ -48,18 +48,20 @@ export function i18nextToXmbObject(
 /**
  * Doctype header for xmb files.
  */
-const xmlDocType = `<!ELEMENT messagebundle (msg)*>
-<!ATTLIST messagebundle class CDATA #IMPLIED>
-<!ELEMENT msg (#PCDATA|ph|source)*>
-<!ATTLIST msg id CDATA #IMPLIED>
-<!ATTLIST msg seq CDATA #IMPLIED>
-<!ATTLIST msg name CDATA #IMPLIED>
-<!ATTLIST msg desc CDATA #IMPLIED>
-<!ATTLIST msg xml:space (default|preserve) "default">
-<!ELEMENT source (#PCDATA)>
-<!ELEMENT ph (#PCDATA|ex)*>
-<!ATTLIST ph name CDATA #REQUIRED>
-<!ELEMENT ex (#PCDATA)>`;
+const xmlDocType = `messagebundle [
+  <!ELEMENT messagebundle (msg)*>
+  <!ATTLIST messagebundle class CDATA #IMPLIED>
+  <!ELEMENT msg (#PCDATA|ph|source)*>
+  <!ATTLIST msg id CDATA #IMPLIED>
+  <!ATTLIST msg seq CDATA #IMPLIED>
+  <!ATTLIST msg name CDATA #IMPLIED>
+  <!ATTLIST msg desc CDATA #IMPLIED>
+  <!ATTLIST msg xml:space (default|preserve) "default">
+  <!ELEMENT source (#PCDATA)>
+  <!ELEMENT ph (#PCDATA|ex)*>
+  <!ATTLIST ph name CDATA #REQUIRED>
+  <!ELEMENT ex (#PCDATA)>
+]`;
 
 /*
  * Options for i18nextToXmbObject.
@@ -114,7 +116,7 @@ function messageToElement(
       id: options.prefix + path.join('.'),
       desc: value,
     },
-    elements: lex(value, options.interpolation).map(token => {
+    elements: lex(value, options.interpolation).map((token, i) => {
       switch (token.type) {
         case TokenType.Text:
           return { type: 'text', text: preserveSpaces(token.value) };
@@ -122,6 +124,9 @@ function messageToElement(
           return {
             type: 'element',
             name: 'ph',
+            attributes: {
+              name: `INTERPOLATION_${i}`,
+            },
             elements: [
               {
                 type: 'element',
