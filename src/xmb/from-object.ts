@@ -9,6 +9,8 @@ import { restoreSpaces } from './spaces';
  */
 export interface IFromXmbObjectOptions {
   prefix: string;
+  getId?: (message: xml.Element) => string | void;
+  allowNested?: boolean;
   interpolation: Partial<IInterpolationOptions>;
 }
 
@@ -20,6 +22,12 @@ export function fromXmbObject(
   xmb: xml.Element,
   options: Partial<IFromXmbObjectOptions> = {},
 ): I18nextObject {
+  const {
+    prefix = '',
+    allowNested = true,
+    getId = (el: xml.Element) => el.attributes && String(el.attributes.id),
+  } = options;
+
   if (!xmb.elements) {
     throw malformedError('elements are empty');
   }
@@ -31,7 +39,6 @@ export function fromXmbObject(
     );
   }
 
-  const prefix = options.prefix || '';
   const messages = xmb.elements[1].elements;
   if (!messages) {
     return {};
@@ -39,21 +46,41 @@ export function fromXmbObject(
 
   const object: I18nextObject = {};
   for (const message of messages) {
-    const id = String(message.attributes!.id);
-    if (!id.startsWith(prefix)) {
+    const id = getId(message);
+    if (!id || !id.startsWith(prefix)) {
       continue;
     }
 
     const tokens: Token[] = [];
-    for (const element of message.elements!) {
+    if (!message.elements) {
+      continue;
+    }
+
+    for (const element of message.elements) {
       if (element.type === 'text') {
         tokens.push({ type: TokenType.Text, value: restoreSpaces(String(element.text)) });
-      } else if (element.name === 'ph') {
-        tokens.push(JSON.parse(String(element.elements![0].elements![0].text)));
+      }
+
+      if (element.name !== 'ph' || !element.elements) {
+        continue;
+      }
+      const example = element.elements.find(e => e.name === 'ex');
+      if (!example || !example.elements) {
+        continue;
+      }
+
+      try {
+        tokens.push(JSON.parse(String(example.elements[0].text)));
+      } catch (e) {
+        tokens.push({ type: TokenType.Interpolation, value: String(example.elements[0].text) });
       }
     }
 
-    setDeep(object, id.slice(prefix.length).split('.'), compile(tokens, options.interpolation));
+    if (allowNested) {
+      setDeep(object, id.slice(prefix.length).split('.'), compile(tokens, options.interpolation));
+    } else {
+      object[id.slice(prefix.length)] = compile(tokens, options.interpolation);
+    }
   }
 
   return object;
