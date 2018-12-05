@@ -1,5 +1,5 @@
 {
-  "name": "i18next-xmb",
+  "name": "@mixer/i18next-xmb",
   "version": "1.0.0",
   "description": "xmb compatibility tools for i18next",
   "main": "dist/index.js",
