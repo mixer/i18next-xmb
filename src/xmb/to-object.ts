@@ -117,6 +117,8 @@ function messageToElement(
       desc: value,
     },
     elements: lex(value, options.interpolation).map((token, i) => {
+      const { start, end, ...tokenData } = token;
+
       switch (token.type) {
         case TokenType.Text:
           return { type: 'text', text: preserveSpaces(token.value) };
@@ -131,7 +133,7 @@ function messageToElement(
               {
                 type: 'element',
                 name: 'ex',
-                elements: [{ type: 'text', text: JSON.stringify(token) }],
+                elements: [{ type: 'text', text: JSON.stringify(tokenData) }],
               },
             ],
           };

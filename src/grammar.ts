@@ -76,16 +76,21 @@ export interface INestingToken {
 export type Token = ITextToken | IInterpolationToken | IUnescapedInterpolationToken | INestingToken;
 
 /**
+ * A token with a start and end position from the original string.
+ */
+export type TokenWithPosition = Token & { start: number; end: number };
+
+/**
  * Replaces "tags" in text tokens which are wrapped with the given prefix and
  * suffix. Passes the contents of these tags to the "mapper" function, which
  * should return a replacement token.
  */
 function mapReplacements(
-  tokens: Token[],
+  tokens: TokenWithPosition[],
   prefix: string,
   suffix: string,
   mapper: (value: string) => Token,
-): Token[] {
+): TokenWithPosition[] {
   for (let i = 0; i < tokens.length; i++) {
     const token = tokens[i];
     if (token.type !== TokenType.Text) {
@@ -105,9 +110,23 @@ function mapReplacements(
     tokens.splice(
       i,
       1,
-      { type: TokenType.Text, value: token.value.slice(0, prefixIndex) },
-      mapper(token.value.slice(prefixIndex + prefix.length, suffixIndex)),
-      { type: TokenType.Text, value: token.value.slice(suffixIndex + suffix.length) },
+      {
+        type: TokenType.Text,
+        value: token.value.slice(0, prefixIndex),
+        start: token.start,
+        end: token.start + prefixIndex,
+      },
+      {
+        ...mapper(token.value.slice(prefixIndex + prefix.length, suffixIndex)),
+        start: token.start + prefixIndex,
+        end: token.start + suffixIndex + suffix.length,
+      },
+      {
+        type: TokenType.Text,
+        value: token.value.slice(suffixIndex + suffix.length),
+        start: token.start + suffixIndex + suffix.length,
+        end: token.end,
+      },
     );
   }
 
@@ -118,7 +137,7 @@ function mapReplacements(
  * Simplifies the list of tokens, removing empty text tokens and merging
  * adjacent text tokens.
  */
-function simplifyTokens(tokens: Token[]): Token[] {
+function simplifyTokens(tokens: TokenWithPosition[]): TokenWithPosition[] {
   for (let i = 0; i < tokens.length; i++) {
     const token = tokens[i];
     if (token.type !== TokenType.Text) {
@@ -132,7 +151,12 @@ function simplifyTokens(tokens: Token[]): Token[] {
 
     const previous = tokens[i - 1];
     if (i > 0 && previous.type === TokenType.Text) {
-      tokens.splice(--i, 1, { type: TokenType.Text, value: previous.value + token.value });
+      tokens.splice(--i, 1, {
+        type: TokenType.Text,
+        value: previous.value + token.value,
+        start: previous.start,
+        end: token.end,
+      });
     }
   }
 
@@ -155,9 +179,14 @@ function extractFormat(
 /**
  * Lexes the interpolation input into its component tokens.
  */
-export function lex(input: string, partialOptions?: Partial<IInterpolationOptions>): Token[] {
+export function lex(
+  input: string,
+  partialOptions?: Partial<IInterpolationOptions>,
+): TokenWithPosition[] {
   const options = { ...defaultOptions, ...partialOptions };
-  let tokens: Token[] = [{ type: TokenType.Text, value: input }];
+  let tokens: TokenWithPosition[] = [
+    { type: TokenType.Text, value: input, start: 0, end: input.length },
+  ];
 
   tokens = mapReplacements(tokens, options.prefix, options.suffix, untrimmed => {
     const value = untrimmed.trim();

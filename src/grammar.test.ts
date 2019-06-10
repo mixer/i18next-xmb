@@ -8,7 +8,14 @@ const testCases: {
 describe('lex()', () => {
   Object.keys(testCases).forEach(tcase => {
     const { input, output, options } = testCases[tcase];
-    it(tcase, () => expect(lex(input, options)).to.deep.equal(output));
+    it(tcase, () => {
+      const results = lex(input, options).map(({ start, end, ...attrs }) => ({
+        ...attrs,
+        segment: input.slice(start, end),
+      }));
+
+      expect(results).to.deep.equal(output);
+    });
   });
 });
 

@@ -1,88 +1,88 @@
 {
   "simple strings": {
     "input": "hello world!",
-    "output": [{ "type": 0, "value": "hello world!" }]
+    "output": [{ "type": 0, "value": "hello world!", "segment": "hello world!" }]
   },
   "simple interpolations": {
     "input": "hello {{ name }}!",
     "output": [
-      { "type": 0, "value": "hello " },
-      { "type": 2, "value": "name" },
-      { "type": 0, "value": "!" }
+      { "type": 0, "value": "hello ", "segment": "hello " },
+      { "type": 2, "value": "name", "segment": "{{ name }}" },
+      { "type": 0, "value": "!", "segment": "!" }
     ]
   },
   "unescaped interpolations": {
     "input": "hello {{- name }}!",
     "output": [
-      { "type": 0, "value": "hello " },
-      { "type": 1, "value": "name" },
-      { "type": 0, "value": "!" }
+      { "type": 0, "value": "hello ", "segment": "hello " },
+      { "type": 1, "value": "name", "segment": "{{- name }}" },
+      { "type": 0, "value": "!", "segment": "!" }
     ]
   },
   "formmated interpolations": {
     "input": "hello {{ name, uppercase }}!",
     "output": [
-      { "type": 0, "value": "hello " },
-      { "type": 2, "value": "name", "format": "uppercase" },
-      { "type": 0, "value": "!" }
+      { "type": 0, "value": "hello ", "segment": "hello " },
+      { "type": 2, "value": "name", "format": "uppercase", "segment": "{{ name, uppercase }}" },
+      { "type": 0, "value": "!", "segment": "!" }
     ]
   },
   "unescaped formatted interpolations": {
     "input": "hello {{- name, uppercase }}!",
     "output": [
-      { "type": 0, "value": "hello " },
-      { "type": 1, "value": "name", "format": "uppercase" },
-      { "type": 0, "value": "!" }
+      { "type": 0, "value": "hello ", "segment": "hello " },
+      { "type": 1, "value": "name", "format": "uppercase", "segment": "{{- name, uppercase }}" },
+      { "type": 0, "value": "!", "segment": "!" }
     ]
   },
   "handles nesting": {
     "input": "hello $t(name)!",
     "output": [
-      { "type": 0, "value": "hello " },
-      { "type": 3, "args": ["name"] },
-      { "type": 0, "value": "!" }
+      { "type": 0, "value": "hello ", "segment": "hello " },
+      { "type": 3, "args": ["name"], "segment": "$t(name)" },
+      { "type": 0, "value": "!", "segment": "!" }
     ]
   },
   "handles nesting with arguments": {
     "input": "hello $t(name, world)!",
     "output": [
-      { "type": 0, "value": "hello " },
-      { "type": 3, "args": ["name", "world"] },
-      { "type": 0, "value": "!" }
+      { "type": 0, "value": "hello ", "segment": "hello " },
+      { "type": 3, "args": ["name", "world"], "segment": "$t(name, world)" },
+      { "type": 0, "value": "!", "segment": "!" }
     ]
   },
   "ignores partial or unmatched elements": {
     "input": "hello $t(name {{!",
-    "output": [{ "type": 0, "value": "hello $t(name {{!" }]
+    "output": [{ "type": 0, "value": "hello $t(name {{!", "segment": "hello $t(name {{!" }]
   },
   "handles multiple/simplifies empty": {
     "input": "{{ a }}{{- b }}$t(c){{ d, uppercase }}$t(e, {})",
     "output": [
-      { "type": 2, "value": "a" },
-      { "type": 1, "value": "b" },
-      { "type": 3, "args": ["c"] },
-      { "type": 2, "value": "d", "format": "uppercase" },
-      { "type": 3, "args": ["e", "{}"] }
+      { "type": 2, "value": "a", "segment": "{{ a }}" },
+      { "type": 1, "value": "b", "segment": "{{- b }}" },
+      { "type": 3, "args": ["c"], "segment": "$t(c)" },
+      { "type": 2, "value": "d", "format": "uppercase", "segment": "{{ d, uppercase }}" },
+      { "type": 3, "args": ["e", "{}"], "segment": "$t(e, {})" }
     ]
   },
   "omits extra spaces as requested": {
     "input": "{{a}}{{-b}}$t(c){{d,uppercase}}$t(e,{})",
     "output": [
-      { "type": 2, "value": "a" },
-      { "type": 1, "value": "b" },
-      { "type": 3, "args": ["c"] },
-      { "type": 2, "value": "d", "format": "uppercase" },
-      { "type": 3, "args": ["e", "{}"] }
+      { "type": 2, "value": "a", "segment": "{{a}}" },
+      { "type": 1, "value": "b", "segment": "{{-b}}" },
+      { "type": 3, "args": ["c"], "segment": "$t(c)" },
+      { "type": 2, "value": "d", "format": "uppercase", "segment": "{{d,uppercase}}" },
+      { "type": 3, "args": ["e", "{}"], "segment": "$t(e,{})" }
     ],
     "options": { "spaceAround": false }
   },
   "overides default replacements": {
     "input": "[ a ][{ b }](c)[ d% uppercase ]",
     "output": [
-      { "type": 2, "value": "a" },
-      { "type": 1, "value": "b" },
-      { "type": 3, "args": ["c"] },
-      { "type": 2, "value": "d", "format": "uppercase" }
+      { "type": 2, "value": "a", "segment": "[ a ]" },
+      { "type": 1, "value": "b", "segment": "[{ b }]" },
+      { "type": 3, "args": ["c"], "segment": "(c)" },
+      { "type": 2, "value": "d", "format": "uppercase", "segment": "[ d% uppercase ]" }
     ],
     "options": {
       "prefix": "[",
