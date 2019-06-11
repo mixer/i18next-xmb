@@ -9,6 +9,8 @@ import { restoreSpaces } from './spaces';
  */
 export interface IFromXmbObjectOptions {
   prefix: string;
+  descriptionKey: (key: string) => string | void;
+  transformDescription: (key: string) => string;
   decodeInterpolation: (interpolation: string | number | boolean) => string;
   getId: (message: xml.Element) => string | void;
   allowNested?: boolean;
@@ -25,6 +27,8 @@ export function fromXmbObject(
 ): I18nextObject {
   const {
     prefix = '',
+    descriptionKey = () => undefined,
+    transformDescription = (s: string) => s,
     decodeInterpolation = String,
     allowNested = true,
     getId = (el: xml.Element) => el.attributes && String(el.attributes.id),
@@ -53,6 +57,7 @@ export function fromXmbObject(
       continue;
     }
 
+    const description = transformDescription(String(message.attributes!.desc));
     const tokens: Token[] = [];
     if (!message.elements) {
       continue;
@@ -81,10 +86,22 @@ export function fromXmbObject(
       }
     }
 
+    const slicedId = id.slice(prefix.length);
     if (allowNested) {
-      setDeep(object, id.slice(prefix.length).split('.'), compile(tokens, options.interpolation));
+      const parts = slicedId.split('.');
+      setDeep(object, parts, compile(tokens, options.interpolation));
+
+      const descKey = descriptionKey(parts[parts.length - 1]);
+      if (descKey) {
+        setDeep(object, [...parts.slice(0, -1), descKey], description);
+      }
     } else {
-      object[id.slice(prefix.length)] = compile(tokens, options.interpolation);
+      object[slicedId] = compile(tokens, options.interpolation);
+
+      const descKey = descriptionKey(slicedId);
+      if (descKey) {
+        object[descKey] = description;
+      }
     }
   }
 
@@ -114,7 +131,7 @@ function malformedError(details: string): Error {
 /**
  * Sets the deep value within the target object. Supports arrays.
  */
-function setDeep(target: any, path: string[], value: any) {
+function setDeep(target: any, [...path]: string[], value: any) {
   while (path.length > 1) {
     const segment = path.shift()!;
     if (target[segment]) {

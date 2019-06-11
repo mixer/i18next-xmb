@@ -36,4 +36,30 @@ describe('to object', () => {
       ),
     ).to.deep.equal(xml);
   });
+
+  it('sets the description key', () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE ${xmlDocType}>
+<messagebundle>
+  <msg id="nested.thing" desc="Another greeting here">Hola!</msg>
+  <msg id="foo" desc="Greeting here">Hello!</msg>
+</messagebundle>`;
+
+    expect(
+      i18nextToXmbString(
+        {
+          foo: 'Hello!',
+          _foo: 'Greeting here',
+          nested: {
+            thing: 'Hola!',
+            _thing: 'Another greeting here',
+          },
+        },
+        {
+          descriptionKey: e => `_${e}`,
+          serialize: { spaces: 2 },
+        },
+      ),
+    ).to.deep.equal(xml);
+  });
 });

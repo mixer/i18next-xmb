@@ -9,6 +9,8 @@ import { preserveSpaces } from './spaces';
  */
 export interface IObjectToXmbObjectOptions {
   prefix: string;
+  descriptionKey: (key: string) => string | void;
+  transformDescription: (key: string) => string;
   encodeInterpolation: (token: Token) => string | number | boolean;
   interpolation: Partial<IInterpolationOptions>;
 }
@@ -22,28 +24,50 @@ export function i18nextToXmbObject(
 ) {
   const options: IObjectToXmbObjectOptions = {
     prefix: '',
+    descriptionKey: () => undefined,
+    transformDescription: (s: string) => s,
     interpolation: {},
     encodeInterpolation: JSON.stringify,
     ...partialOptions,
   };
 
-  const queue: Array<{ path: string[]; node: I18nextNode }> = [];
+  const queue: Array<{ path: string[]; node: I18nextNode; description?: string }> = [];
+  const pushToQueue = (path: string[], currentObject: I18nextObject) => {
+    const descKey = options.descriptionKey(path[path.length - 1]);
+    const node = currentObject[path[path.length - 1]];
+    if (descKey && typeof currentObject[descKey] === 'string') {
+      descriptionKeys.add(descKey);
+      queue.push({
+        path,
+        node,
+        description: options.transformDescription(currentObject[descKey] as string),
+      });
+    } else {
+      queue.push({ path, node });
+    }
+  };
+
   const elements: xml.Element[] = [];
+  const descriptionKeys = new Set<string | void>();
   for (const key of Object.keys(object)) {
-    queue.push({ path: [key], node: object[key] });
+    pushToQueue([key], object);
   }
 
   while (queue.length > 0) {
-    const { path, node } = queue.pop()!;
+    const { path, node, description } = queue.pop()!;
+    if (descriptionKeys.has(path[path.length - 1])) {
+      continue;
+    }
+
     if (typeof node === 'string') {
-      elements.push(messageToElement(path, node, options));
+      elements.push(messageToElement(path, node, description, options));
     } else if (node instanceof Array) {
       for (let i = 0; i < node.length; i++) {
         queue.push({ path: [...path, String(i)], node: node[i] });
       }
     } else {
       for (const key of Object.keys(node)) {
-        queue.push({ path: [...path, key], node: node[key] });
+        pushToQueue([...path, key], node);
       }
     }
   }
@@ -113,6 +137,7 @@ export function i18nextToXmbString(
 function messageToElement(
   path: ReadonlyArray<string>,
   value: string,
+  description: string | void,
   options: IObjectToXmbObjectOptions,
 ): xml.Element {
   return {
@@ -120,7 +145,7 @@ function messageToElement(
     name: 'msg',
     attributes: {
       id: options.prefix + path.join('.'),
-      desc: value,
+      desc: description || value,
     },
     elements: lex(value, options.interpolation).map((token, i) => {
       const { start, end, ...tokenData } = token;
