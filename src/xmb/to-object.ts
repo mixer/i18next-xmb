@@ -1,6 +1,6 @@
 import * as xml from 'xml-js';
 
-import { IInterpolationOptions, lex, TokenType } from '../grammar';
+import { IInterpolationOptions, lex, Token, TokenType } from '../grammar';
 import { I18nextNode, I18nextObject } from '../types';
 import { preserveSpaces } from './spaces';
 
@@ -9,6 +9,7 @@ import { preserveSpaces } from './spaces';
  */
 export interface IObjectToXmbObjectOptions {
   prefix: string;
+  encodeInterpolation: (token: Token) => string | number | boolean;
   interpolation: Partial<IInterpolationOptions>;
 }
 
@@ -19,7 +20,12 @@ export function i18nextToXmbObject(
   object: I18nextObject,
   partialOptions?: Partial<IObjectToXmbObjectOptions>,
 ) {
-  const options: IObjectToXmbObjectOptions = { prefix: '', interpolation: {}, ...partialOptions };
+  const options: IObjectToXmbObjectOptions = {
+    prefix: '',
+    interpolation: {},
+    encodeInterpolation: JSON.stringify,
+    ...partialOptions,
+  };
 
   const queue: Array<{ path: string[]; node: I18nextNode }> = [];
   const elements: xml.Element[] = [];
@@ -48,7 +54,7 @@ export function i18nextToXmbObject(
 /**
  * Doctype header for xmb files.
  */
-const xmlDocType = `messagebundle [
+export const xmlDocType = `messagebundle [
   <!ELEMENT messagebundle (msg)*>
   <!ATTLIST messagebundle class CDATA #IMPLIED>
   <!ELEMENT msg (#PCDATA|ph|source)*>
@@ -133,7 +139,7 @@ function messageToElement(
               {
                 type: 'element',
                 name: 'ex',
-                elements: [{ type: 'text', text: JSON.stringify(tokenData) }],
+                elements: [{ type: 'text', text: options.encodeInterpolation(tokenData) }],
               },
             ],
           };

@@ -9,7 +9,8 @@ import { restoreSpaces } from './spaces';
  */
 export interface IFromXmbObjectOptions {
   prefix: string;
-  getId?: (message: xml.Element) => string | void;
+  decodeInterpolation: (interpolation: string | number | boolean) => string;
+  getId: (message: xml.Element) => string | void;
   allowNested?: boolean;
   interpolation: Partial<IInterpolationOptions>;
 }
@@ -24,6 +25,7 @@ export function fromXmbObject(
 ): I18nextObject {
   const {
     prefix = '',
+    decodeInterpolation = String,
     allowNested = true,
     getId = (el: xml.Element) => el.attributes && String(el.attributes.id),
   } = options;
@@ -72,7 +74,10 @@ export function fromXmbObject(
       try {
         tokens.push(JSON.parse(String(example.elements[0].text)));
       } catch (e) {
-        tokens.push({ type: TokenType.Interpolation, value: String(example.elements[0].text) });
+        tokens.push({
+          type: TokenType.Interpolation,
+          value: decodeInterpolation(example.elements[0].text!),
+        });
       }
     }
 
